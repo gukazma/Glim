@@ -1,0 +1,5 @@
+[Bb]uild
+out
+.cache
+.vs
+CMakeUserPresets.json
