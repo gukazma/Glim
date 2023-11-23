@@ -27,8 +27,8 @@ class CppTemplateProjectRecipe(ConanFile):
             self.options.rm_safe("fPIC")
     def requirements(self):
         self.requires("gtest/1.14.0")
-        self.requires("zlib/1.3")
-        self.options["zlib"].shared = True
+        self.requires("sdl/2.28.5")
+        self.options["sdl"].shared = True
         
     def configure(self):
         if self.options.shared:
