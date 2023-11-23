@@ -24,6 +24,8 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_BINARY_DIR}/bin)
 include(CMakeModules/doxygen.cmake)
 include(CMakeModules/dependency-graph.cmake)
 include(CMakeModules/formatting.cmake)
+include(CMakeModules/shadercompile.cmake)
+
 # ---- Include guards ----
 if(PROJECT_SOURCE_DIR STREQUAL PROJECT_BINARY_DIR)
   message(

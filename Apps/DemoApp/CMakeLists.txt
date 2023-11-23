@@ -14,8 +14,13 @@ set_target_properties(${TARGET_NAME} PROPERTIES CXX_STANDARD 17 OUTPUT_NAME ${PR
 set_target_properties(${TARGET_NAME} PROPERTIES FOLDER Apps)
 
 target_compile_options(${TARGET_NAME} PUBLIC "$<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/WX->")
+find_package(SDL2 REQUIRED)
 
-target_link_libraries(${TARGET_NAME} PRIVATE ${PROJECT_NAME}::Primitives)
+target_link_libraries(${TARGET_NAME} PRIVATE 
+Glim::Glim 
+SDL2::SDL2
+SDL2::SDL2main
+)
 
 target_include_directories(
   ${TARGET_NAME} 

@@ -1,1 +1,2 @@
-add_subdirectory(Common)
+add_subdirectory(Glim)
+add_subdirectory(Shader)
