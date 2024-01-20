@@ -37,6 +37,12 @@ int main(int argc, char** argv)
     vk::raii::Context  context;
     vk::raii::Instance instance =
         vk::raii::su::makeInstance(context, AppName, EngineName, {}, extensions);
+#if !defined(NDEBUG)
+    vk::raii::DebugUtilsMessengerEXT debugUtilsMessenger(
+        instance, vk::su::makeDebugUtilsMessengerCreateInfoEXT());
+#endif
+    vk::raii::PhysicalDevice physicalDevice = vk::raii::PhysicalDevices(instance).front();
+
    /* glim::Init(
         extensions,
         [&](vk::Instance instance) {

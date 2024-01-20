@@ -130,6 +130,17 @@ VKAPI_ATTR VkBool32 VKAPI_CALL debugUtilsMessengerCallback(
     return vk::False;
 }
 
+vk::DebugUtilsMessengerCreateInfoEXT makeDebugUtilsMessengerCreateInfoEXT()
+{
+    return {{},
+            vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning |
+                vk::DebugUtilsMessageSeverityFlagBitsEXT::eError,
+            vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral |
+                vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance |
+                vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation,
+            &vk::su::debugUtilsMessengerCallback};
+}
+
 
 #if defined(NDEBUG)
 vk::StructureChain<vk::InstanceCreateInfo>
