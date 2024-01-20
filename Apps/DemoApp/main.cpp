@@ -2,8 +2,11 @@
 #include "SDL_vulkan.h"
 #include <iostream>
 #include <vector>
+#include <vulkan/vulkan_raii.hpp>
+#include <Glim/Tools.h>
 
-#include "Glim/Glim.hpp"
+static char const* AppName    = "05_InitSwapchainRAII";
+static char const* EngineName = "Vulkan.hpp";
 
 int main(int argc, char** argv)
 {
@@ -24,10 +27,17 @@ int main(int argc, char** argv)
 
     unsigned int count;
     SDL_Vulkan_GetInstanceExtensions(window, &count, nullptr);
-    std::vector<const char*> extensions(count);
-    SDL_Vulkan_GetInstanceExtensions(window, &count, extensions.data());
+    std::vector<const char*> extensions_sdl(count);
+    std::vector<std::string> extensions;
+    SDL_Vulkan_GetInstanceExtensions(window, &count, extensions_sdl.data());
+    for (size_t i = 0; i < extensions_sdl.size(); i++) {
+        extensions.push_back(std::string(extensions_sdl[i]));
+    }
 
-    glim::Init(
+    vk::raii::Context  context;
+    vk::raii::Instance instance =
+        vk::raii::su::makeInstance(context, AppName, EngineName, {}, extensions);
+   /* glim::Init(
         extensions,
         [&](vk::Instance instance) {
             VkSurfaceKHR surface;
@@ -37,7 +47,7 @@ int main(int argc, char** argv)
             return surface;
         },
         1024,
-        720);
+        720);*/
 
     while (!shouldClose) {
         while (SDL_PollEvent(&event)) {
@@ -47,7 +57,6 @@ int main(int argc, char** argv)
         }
     }
 
-    glim::Quit();
 
     SDL_DestroyWindow(window);
     SDL_Quit();

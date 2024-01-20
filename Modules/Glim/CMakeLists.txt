@@ -27,7 +27,7 @@ target_link_libraries(${TARGET_NAME}
 target_include_directories(
   ${TARGET_NAME} 
   PUBLIC 
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/Include>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}>
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/Modules/Shader/generated/cpp>
 )
 
