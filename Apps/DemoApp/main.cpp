@@ -68,17 +68,6 @@ int main(int argc, char** argv)
         {},
         graphicsAndPresentQueueFamilyIndex.first,
         graphicsAndPresentQueueFamilyIndex.second);
-   /* glim::Init(
-        extensions,
-        [&](vk::Instance instance) {
-            VkSurfaceKHR surface;
-            if (!SDL_Vulkan_CreateSurface(window, instance, &surface)) {
-                throw std::runtime_error("can't create surface");
-            }
-            return surface;
-        },
-        1024,
-        720);*/
 
     while (!shouldClose) {
         while (SDL_PollEvent(&event)) {
