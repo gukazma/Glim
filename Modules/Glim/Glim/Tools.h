@@ -1,3 +1,4 @@
+#pragma once
 #include <vulkan/vulkan_raii.hpp>
 #include <glm/glm.hpp>
 namespace vk
@@ -38,6 +39,18 @@ glm::mat4x4              createModelViewProjectionClipMatrix(vk::Extent2D const&
 template<class T> VULKAN_HPP_INLINE constexpr const T& clamp(const T& v, const T& lo, const T& hi)
 {
     return v < lo ? lo : hi < v ? hi : v;
+}
+template<typename TargetType, typename SourceType>
+VULKAN_HPP_INLINE TargetType checked_cast(SourceType value)
+{
+    static_assert(sizeof(TargetType) <= sizeof(SourceType),
+                  "No need to cast from smaller to larger type!");
+    static_assert(std::numeric_limits<SourceType>::is_integer, "Only integer types supported!");
+    static_assert(!std::numeric_limits<SourceType>::is_signed, "Only unsigned types supported!");
+    static_assert(std::numeric_limits<TargetType>::is_integer, "Only integer types supported!");
+    static_assert(!std::numeric_limits<TargetType>::is_signed, "Only unsigned types supported!");
+    assert(value <= std::numeric_limits<TargetType>::max());
+    return static_cast<TargetType>(value);
 }
 }
 }
@@ -216,6 +229,10 @@ void copyToDevice(vk::raii::DeviceMemory const& deviceMemory, T const* pData, si
     }
     deviceMemory.unmapMemory();
 }
+vk::raii::DescriptorSetLayout makeDescriptorSetLayout(
+    vk::raii::Device const&                                                            device,
+    std::vector<std::tuple<vk::DescriptorType, uint32_t, vk::ShaderStageFlags>> const& bindingData,
+    vk::DescriptorSetLayoutCreateFlags                                                 flags = {});
 template<typename T> void copyToDevice(vk::raii::DeviceMemory const& deviceMemory, T const& data)
 {
     copyToDevice<T>(deviceMemory, &data, 1);

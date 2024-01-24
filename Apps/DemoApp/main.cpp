@@ -76,6 +76,11 @@ int main(int argc, char** argv)
 
     glm::mat4x4 mvpcMatrix = vk::su::createModelViewProjectionClipMatrix(extent);
     vk::raii::su::copyToDevice(uniformBufferData.deviceMemory, mvpcMatrix);
+
+    vk::raii::DescriptorSetLayout descriptorSetLayout = vk::raii::su::makeDescriptorSetLayout(
+        device, {{vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex}});
+    vk::raii::PipelineLayout pipelineLayout(device, {{}, *descriptorSetLayout});
+
     while (!shouldClose) {
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_QUIT) {

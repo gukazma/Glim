@@ -513,6 +513,21 @@ ImageData::ImageData(vk::raii::PhysicalDevice const& physicalDevice, vk::raii::D
         vk::ImageViewCreateInfo(
             {}, *image, vk::ImageViewType::e2D, format, {}, {aspectMask, 0, 1, 0, 1}));
 }
+
+vk::raii::DescriptorSetLayout makeDescriptorSetLayout(
+    vk::raii::Device const&                                                            device,
+    std::vector<std::tuple<vk::DescriptorType, uint32_t, vk::ShaderStageFlags>> const& bindingData,
+    vk::DescriptorSetLayoutCreateFlags                                                 flags)
+{
+    std::vector<vk::DescriptorSetLayoutBinding> bindings( bindingData.size() );
+        for ( size_t i = 0; i < bindingData.size(); i++ )
+        {
+          bindings[i] = vk::DescriptorSetLayoutBinding(
+            vk::su::checked_cast<uint32_t>( i ), std::get<0>( bindingData[i] ), std::get<1>( bindingData[i] ), std::get<2>( bindingData[i] ) );
+        }
+        vk::DescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo( flags, bindings );
+        return vk::raii::DescriptorSetLayout( device, descriptorSetLayoutCreateInfo );
+}
 }   // namespace su
 }   // namespace raii
 }   // namespace vk
