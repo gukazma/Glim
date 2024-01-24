@@ -73,6 +73,9 @@ int main(int argc, char** argv)
         physicalDevice, device, vk::Format::eD16Unorm, extent);
     vk::raii::su::BufferData uniformBufferData(
         physicalDevice, device, sizeof(glm::mat4x4), vk::BufferUsageFlagBits::eUniformBuffer);
+
+    glm::mat4x4 mvpcMatrix = vk::su::createModelViewProjectionClipMatrix(extent);
+    vk::raii::su::copyToDevice(uniformBufferData.deviceMemory, mvpcMatrix);
     while (!shouldClose) {
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_QUIT) {

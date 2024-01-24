@@ -1,5 +1,5 @@
 #include <vulkan/vulkan_raii.hpp>
-
+#include <glm/glm.hpp>
 namespace vk
 {
 namespace su
@@ -34,7 +34,7 @@ vk::DeviceMemory         allocateDeviceMemory(vk::Device const&                 
                                               vk::PhysicalDeviceMemoryProperties const& memoryProperties,
                                               vk::MemoryRequirements const&             memoryRequirements,
                                               vk::MemoryPropertyFlags memoryPropertyFlags);
-
+glm::mat4x4              createModelViewProjectionClipMatrix(vk::Extent2D const& extent);
 template<class T> VULKAN_HPP_INLINE constexpr const T& clamp(const T& v, const T& lo, const T& hi)
 {
     return v < lo ? lo : hi < v ? hi : v;
@@ -199,7 +199,27 @@ struct DepthBufferData : public ImageData
                     vk::MemoryPropertyFlagBits::eDeviceLocal, vk::ImageAspectFlagBits::eDepth)
     {}
 };
-
+template<typename T>
+void copyToDevice(vk::raii::DeviceMemory const& deviceMemory, T const* pData, size_t count,
+                  vk::DeviceSize stride = sizeof(T))
+{
+    assert(sizeof(T) <= stride);
+    uint8_t* deviceData = static_cast<uint8_t*>(deviceMemory.mapMemory(0, count * stride));
+    if (stride == sizeof(T)) {
+        memcpy(deviceData, pData, count * sizeof(T));
+    }
+    else {
+        for (size_t i = 0; i < count; i++) {
+            memcpy(deviceData, &pData[i], sizeof(T));
+            deviceData += stride;
+        }
+    }
+    deviceMemory.unmapMemory();
+}
+template<typename T> void copyToDevice(vk::raii::DeviceMemory const& deviceMemory, T const& data)
+{
+    copyToDevice<T>(deviceMemory, &data, 1);
+}
 }
 }
 }
