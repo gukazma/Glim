@@ -48,6 +48,9 @@ int main(int argc, char** argv)
     }
     vk::raii::SurfaceKHR surface(instance, _surface);
 
+    std::pair<uint32_t, uint32_t> graphicsAndPresentQueueFamilyIndex =
+        vk::raii::su::findGraphicsAndPresentQueueFamilyIndex(physicalDevice, surface);
+
    /* glim::Init(
         extensions,
         [&](vk::Instance instance) {

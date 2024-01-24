@@ -141,6 +141,21 @@ vk::DebugUtilsMessengerCreateInfoEXT makeDebugUtilsMessengerCreateInfoEXT()
             &vk::su::debugUtilsMessengerCallback};
 }
 
+uint32_t findGraphicsQueueFamilyIndex(
+    std::vector<vk::QueueFamilyProperties> const& queueFamilyProperties)
+{
+    // get the first index into queueFamiliyProperties which supports graphics
+    std::vector<vk::QueueFamilyProperties>::const_iterator graphicsQueueFamilyProperty =
+        std::find_if(queueFamilyProperties.begin(),
+                     queueFamilyProperties.end(),
+                     [](vk::QueueFamilyProperties const& qfp) {
+                         return qfp.queueFlags & vk::QueueFlagBits::eGraphics;
+                     });
+    assert(graphicsQueueFamilyProperty != queueFamilyProperties.end());
+    return static_cast<uint32_t>(
+        std::distance(queueFamilyProperties.begin(), graphicsQueueFamilyProperty));
+}
+
 
 #if defined(NDEBUG)
 vk::StructureChain<vk::InstanceCreateInfo>
@@ -208,6 +223,39 @@ vk::raii::Instance makeInstance(vk::raii::Context const& context, std::string co
             vk::su::makeInstanceCreateInfoChain(applicationInfo, enabledLayers, enabledExtensions);
 
     return vk::raii::Instance(context, instanceCreateInfoChain.get<vk::InstanceCreateInfo>());
+}
+std::pair<uint32_t, uint32_t> findGraphicsAndPresentQueueFamilyIndex(
+    vk::raii::PhysicalDevice const& physicalDevice, vk::raii::SurfaceKHR const& surface)
+{
+    std::vector<vk::QueueFamilyProperties> queueFamilyProperties =
+        physicalDevice.getQueueFamilyProperties();
+    assert(queueFamilyProperties.size() < std::numeric_limits<uint32_t>::max());
+
+    uint32_t graphicsQueueFamilyIndex = vk::su::findGraphicsQueueFamilyIndex(queueFamilyProperties);
+    if (physicalDevice.getSurfaceSupportKHR(graphicsQueueFamilyIndex, *surface)) {
+        return std::make_pair(graphicsQueueFamilyIndex,
+                              graphicsQueueFamilyIndex);   // the first graphicsQueueFamilyIndex
+                                                           // does also support presents
+    }
+
+    // the graphicsQueueFamilyIndex doesn't support present -> look for an other family index that
+    // supports both graphics and present
+    for (size_t i = 0; i < queueFamilyProperties.size(); i++) {
+        if ((queueFamilyProperties[i].queueFlags & vk::QueueFlagBits::eGraphics) &&
+            physicalDevice.getSurfaceSupportKHR(static_cast<uint32_t>(i), *surface)) {
+            return std::make_pair(static_cast<uint32_t>(i), static_cast<uint32_t>(i));
+        }
+    }
+
+    // there's nothing like a single family index that supports both graphics and present -> look
+    // for an other family index that supports present
+    for (size_t i = 0; i < queueFamilyProperties.size(); i++) {
+        if (physicalDevice.getSurfaceSupportKHR(static_cast<uint32_t>(i), *surface)) {
+            return std::make_pair(graphicsQueueFamilyIndex, static_cast<uint32_t>(i));
+        }
+    }
+
+    throw std::runtime_error("Could not find queues for both graphics or present -> terminating");
 }
 }
 }   // namespace raii

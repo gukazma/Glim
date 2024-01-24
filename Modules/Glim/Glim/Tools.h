@@ -24,6 +24,7 @@ VKAPI_ATTR VkBool32 VKAPI_CALL debugUtilsMessengerCallback(
     VkDebugUtilsMessageTypeFlagsEXT             messageTypes,
     VkDebugUtilsMessengerCallbackDataEXT const* pCallbackData, void* /*pUserData*/);
 vk::DebugUtilsMessengerCreateInfoEXT makeDebugUtilsMessengerCreateInfoEXT();
+uint32_t findGraphicsQueueFamilyIndex(std::vector<vk::QueueFamilyProperties> const& queueFamilyProperties);
 }
 }
 
@@ -38,6 +39,8 @@ vk::raii::Instance makeInstance(vk::raii::Context const& context, std::string co
                                 std::vector<std::string> const& layers     = {},
                                 std::vector<std::string> const& extensions = {},
                                 uint32_t                        apiVersion = VK_API_VERSION_1_0);
+std::pair<uint32_t, uint32_t> findGraphicsAndPresentQueueFamilyIndex(
+    vk::raii::PhysicalDevice const& physicalDevice, vk::raii::SurfaceKHR const& surface);
 }
 }
 }
