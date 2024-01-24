@@ -156,6 +156,13 @@ uint32_t findGraphicsQueueFamilyIndex(
         std::distance(queueFamilyProperties.begin(), graphicsQueueFamilyProperty));
 }
 
+std::vector<std::string> getDeviceExtensions()
+{
+    return {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
+}
+
+
+
 
 #if defined(NDEBUG)
 vk::StructureChain<vk::InstanceCreateInfo>
@@ -256,6 +263,28 @@ std::pair<uint32_t, uint32_t> findGraphicsAndPresentQueueFamilyIndex(
     }
 
     throw std::runtime_error("Could not find queues for both graphics or present -> terminating");
+}
+vk::raii::Device makeDevice(vk::raii::PhysicalDevice const& physicalDevice,
+                            uint32_t queueFamilyIndex, std::vector<std::string> const& extensions,
+                            vk::PhysicalDeviceFeatures const* physicalDeviceFeatures,
+                            void const*                       pNext)
+{
+    std::vector<char const*> enabledExtensions;
+    enabledExtensions.reserve(extensions.size());
+    for (auto const& ext : extensions) {
+        enabledExtensions.push_back(ext.data());
+    }
+
+    float                     queuePriority = 0.0f;
+    vk::DeviceQueueCreateInfo deviceQueueCreateInfo(
+        vk::DeviceQueueCreateFlags(), queueFamilyIndex, 1, &queuePriority);
+    vk::DeviceCreateInfo deviceCreateInfo(vk::DeviceCreateFlags(),
+                                          deviceQueueCreateInfo,
+                                          {},
+                                          enabledExtensions,
+                                          physicalDeviceFeatures,
+                                          pNext);
+    return vk::raii::Device(physicalDevice, deviceCreateInfo);
 }
 }
 }   // namespace raii
