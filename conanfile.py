@@ -14,6 +14,7 @@ class ModuleConan(ConanFile):
     def requirements(self):
         self.requires("gtest/1.14.0")
         self.requires("sdl/2.28.5")
+        self.requires("glm/cci.20230113")
         self.options["sdl"].shared = True
         
     def imports(self):

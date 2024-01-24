@@ -4,7 +4,7 @@
 #include <vector>
 #include <vulkan/vulkan_raii.hpp>
 #include <Glim/Tools.h>
-
+#include <glm/glm.hpp>
 static char const* AppName    = "05_InitSwapchainRAII";
 static char const* EngineName = "Vulkan.hpp";
 
@@ -71,7 +71,8 @@ int main(int argc, char** argv)
 
     vk::raii::su::DepthBufferData depthBufferData(
         physicalDevice, device, vk::Format::eD16Unorm, extent);
-
+    vk::raii::su::BufferData uniformBufferData(
+        physicalDevice, device, sizeof(glm::mat4x4), vk::BufferUsageFlagBits::eUniformBuffer);
     while (!shouldClose) {
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_QUIT) {
