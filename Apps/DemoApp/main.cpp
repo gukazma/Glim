@@ -52,6 +52,10 @@ int main(int argc, char** argv)
         vk::raii::su::findGraphicsAndPresentQueueFamilyIndex(physicalDevice, surface);
     vk::raii::Device device = vk::raii::su::makeDevice(
         physicalDevice, graphicsAndPresentQueueFamilyIndex.first, vk::su::getDeviceExtensions());
+    vk::raii::CommandPool commandPool =
+        vk::raii::CommandPool(device, {{}, graphicsAndPresentQueueFamilyIndex.first});
+    vk::raii::CommandBuffer commandBuffer = vk::raii::su::makeCommandBuffer(device, commandPool);
+
    /* glim::Init(
         extensions,
         [&](vk::Instance instance) {

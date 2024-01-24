@@ -47,6 +47,8 @@ vk::raii::Device makeDevice(vk::raii::PhysicalDevice const&   physicalDevice,
                             std::vector<std::string> const&   extensions             = {},
                             vk::PhysicalDeviceFeatures const* physicalDeviceFeatures = nullptr,
                             void const*                       pNext                  = nullptr);
+vk::raii::CommandBuffer makeCommandBuffer(vk::raii::Device const&      device,
+                                          vk::raii::CommandPool const& commandPool);
 }
 }
 }

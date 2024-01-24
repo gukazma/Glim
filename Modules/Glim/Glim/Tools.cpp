@@ -286,6 +286,13 @@ vk::raii::Device makeDevice(vk::raii::PhysicalDevice const& physicalDevice,
                                           pNext);
     return vk::raii::Device(physicalDevice, deviceCreateInfo);
 }
+vk::raii::CommandBuffer makeCommandBuffer(vk::raii::Device const&      device,
+                                          vk::raii::CommandPool const& commandPool)
+{
+    vk::CommandBufferAllocateInfo commandBufferAllocateInfo(
+        *commandPool, vk::CommandBufferLevel::ePrimary, 1);
+    return std::move(vk::raii::CommandBuffers(device, commandBufferAllocateInfo).front());
+}
 }
 }   // namespace raii
 }   // namespace vk
