@@ -42,6 +42,11 @@ int main(int argc, char** argv)
         instance, vk::su::makeDebugUtilsMessengerCreateInfoEXT());
 #endif
     vk::raii::PhysicalDevice physicalDevice = vk::raii::PhysicalDevices(instance).front();
+    VkSurfaceKHR             _surface;
+    if (!SDL_Vulkan_CreateSurface(window, *instance, &_surface)) {
+        throw std::runtime_error("can't create surface");
+    }
+    vk::raii::SurfaceKHR surface(instance, _surface);
 
    /* glim::Init(
         extensions,
