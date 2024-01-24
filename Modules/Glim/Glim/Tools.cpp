@@ -161,6 +161,57 @@ std::vector<std::string> getDeviceExtensions()
     return {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 }
 
+vk::SurfaceFormatKHR pickSurfaceFormat(std::vector<vk::SurfaceFormatKHR> const& formats)
+{
+    assert(!formats.empty());
+    vk::SurfaceFormatKHR pickedFormat = formats[0];
+    if (formats.size() == 1) {
+        if (formats[0].format == vk::Format::eUndefined) {
+            pickedFormat.format     = vk::Format::eB8G8R8A8Unorm;
+            pickedFormat.colorSpace = vk::ColorSpaceKHR::eSrgbNonlinear;
+        }
+    }
+    else {
+        // request several formats, the first found will be used
+        vk::Format        requestedFormats[]  = {vk::Format::eB8G8R8A8Unorm,
+                                                 vk::Format::eR8G8B8A8Unorm,
+                                                 vk::Format::eB8G8R8Unorm,
+                                                 vk::Format::eR8G8B8Unorm};
+        vk::ColorSpaceKHR requestedColorSpace = vk::ColorSpaceKHR::eSrgbNonlinear;
+        for (size_t i = 0; i < sizeof(requestedFormats) / sizeof(requestedFormats[0]); i++) {
+            vk::Format requestedFormat = requestedFormats[i];
+            auto       it              = std::find_if(
+                formats.begin(),
+                formats.end(),
+                [requestedFormat, requestedColorSpace](vk::SurfaceFormatKHR const& f) {
+                    return (f.format == requestedFormat) && (f.colorSpace == requestedColorSpace);
+                });
+            if (it != formats.end()) {
+                pickedFormat = *it;
+                break;
+            }
+        }
+    }
+    assert(pickedFormat.colorSpace == vk::ColorSpaceKHR::eSrgbNonlinear);
+    return pickedFormat;
+}
+
+vk::PresentModeKHR pickPresentMode(std::vector<vk::PresentModeKHR> const& presentModes)
+{
+    vk::PresentModeKHR pickedMode = vk::PresentModeKHR::eFifo;
+    for (const auto& presentMode : presentModes) {
+        if (presentMode == vk::PresentModeKHR::eMailbox) {
+            pickedMode = presentMode;
+            break;
+        }
+
+        if (presentMode == vk::PresentModeKHR::eImmediate) {
+            pickedMode = presentMode;
+        }
+    }
+    return pickedMode;
+}
+
 
 
 
@@ -293,6 +344,90 @@ vk::raii::CommandBuffer makeCommandBuffer(vk::raii::Device const&      device,
         *commandPool, vk::CommandBufferLevel::ePrimary, 1);
     return std::move(vk::raii::CommandBuffers(device, commandBufferAllocateInfo).front());
 }
+SwapChainData::SwapChainData(vk::raii::PhysicalDevice const& physicalDevice,
+                             vk::raii::Device const& device, vk::raii::SurfaceKHR const& surface,
+                             vk::Extent2D const& extent, vk::ImageUsageFlags usage,
+                             vk::raii::SwapchainKHR const* pOldSwapchain,
+                             uint32_t graphicsQueueFamilyIndex, uint32_t presentQueueFamilyIndex)
+{
+    vk::SurfaceFormatKHR surfaceFormat =
+        vk::su::pickSurfaceFormat(physicalDevice.getSurfaceFormatsKHR(*surface));
+    colorFormat = surfaceFormat.format;
+
+    vk::SurfaceCapabilitiesKHR surfaceCapabilities =
+        physicalDevice.getSurfaceCapabilitiesKHR(*surface);
+    vk::Extent2D swapchainExtent;
+    if (surfaceCapabilities.currentExtent.width == std::numeric_limits<uint32_t>::max()) {
+        // If the surface size is undefined, the size is set to the size of the images requested.
+        swapchainExtent.width  = vk::su::clamp(extent.width,
+                                              surfaceCapabilities.minImageExtent.width,
+                                              surfaceCapabilities.maxImageExtent.width);
+        swapchainExtent.height = vk::su::clamp(extent.height,
+                                               surfaceCapabilities.minImageExtent.height,
+                                               surfaceCapabilities.maxImageExtent.height);
+    }
+    else {
+        // If the surface size is defined, the swap chain size must match
+        swapchainExtent = surfaceCapabilities.currentExtent;
+    }
+    vk::SurfaceTransformFlagBitsKHR preTransform =
+        (surfaceCapabilities.supportedTransforms & vk::SurfaceTransformFlagBitsKHR::eIdentity)
+            ? vk::SurfaceTransformFlagBitsKHR::eIdentity
+            : surfaceCapabilities.currentTransform;
+    vk::CompositeAlphaFlagBitsKHR compositeAlpha =
+        (surfaceCapabilities.supportedCompositeAlpha &
+         vk::CompositeAlphaFlagBitsKHR::ePreMultiplied)
+            ? vk::CompositeAlphaFlagBitsKHR::ePreMultiplied
+        : (surfaceCapabilities.supportedCompositeAlpha &
+           vk::CompositeAlphaFlagBitsKHR::ePostMultiplied)
+            ? vk::CompositeAlphaFlagBitsKHR::ePostMultiplied
+        : (surfaceCapabilities.supportedCompositeAlpha & vk::CompositeAlphaFlagBitsKHR::eInherit)
+            ? vk::CompositeAlphaFlagBitsKHR::eInherit
+            : vk::CompositeAlphaFlagBitsKHR::eOpaque;
+    vk::PresentModeKHR presentMode =
+        vk::su::pickPresentMode(physicalDevice.getSurfacePresentModesKHR(*surface));
+
+    vk::SwapchainCreateInfoKHR swapChainCreateInfo;
+    swapChainCreateInfo.setSurface(*surface);
+    swapChainCreateInfo.setMinImageCount(
+        vk::su::clamp(3u, surfaceCapabilities.minImageCount, surfaceCapabilities.maxImageCount));
+    swapChainCreateInfo.setImageFormat(colorFormat);
+    swapChainCreateInfo.setImageColorSpace(surfaceFormat.colorSpace);
+    swapChainCreateInfo.setImageExtent(swapchainExtent);
+    swapChainCreateInfo.setImageArrayLayers(1);
+    swapChainCreateInfo.setImageUsage(usage);
+    swapChainCreateInfo.setImageSharingMode(vk::SharingMode::eExclusive);
+    swapChainCreateInfo.setPreTransform(preTransform);
+    swapChainCreateInfo.setCompositeAlpha(compositeAlpha);
+    swapChainCreateInfo.setPresentMode(presentMode);
+    swapChainCreateInfo.setClipped(true);
+    swapChainCreateInfo.setOldSwapchain(pOldSwapchain ? **pOldSwapchain : nullptr);
+
+    if (graphicsQueueFamilyIndex != presentQueueFamilyIndex) {
+        uint32_t queueFamilyIndices[2] = {graphicsQueueFamilyIndex, presentQueueFamilyIndex};
+        // If the graphics and present queues are from different queue families, we either have to
+        // explicitly transfer ownership of images between the queues, or we have to create the
+        // swapchain with imageSharingMode as vk::SharingMode::eConcurrent
+        swapChainCreateInfo.imageSharingMode      = vk::SharingMode::eConcurrent;
+        swapChainCreateInfo.queueFamilyIndexCount = 2;
+        swapChainCreateInfo.pQueueFamilyIndices   = queueFamilyIndices;
+    }
+    swapChain = vk::raii::SwapchainKHR(device, swapChainCreateInfo);
+
+    images = swapChain.getImages();
+
+    imageViews.reserve(images.size());
+    vk::ImageViewCreateInfo imageViewCreateInfo({},
+                                                {},
+                                                vk::ImageViewType::e2D,
+                                                colorFormat,
+                                                {},
+                                                {vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1});
+    for (auto image : images) {
+        imageViewCreateInfo.image = image;
+        imageViews.emplace_back(device, imageViewCreateInfo);
+    }
 }
+}   // namespace su
 }   // namespace raii
 }   // namespace vk

@@ -12,11 +12,12 @@ int main(int argc, char** argv)
 {
     SDL_Init(SDL_INIT_EVERYTHING);
 
+    uint32_t         width = 1024, height = 720;
     SDL_Window* window = SDL_CreateWindow("sandbox",
                                           SDL_WINDOWPOS_CENTERED,
                                           SDL_WINDOWPOS_CENTERED,
-                                          1024,
-                                          720,
+                                          width,
+                                          height,
                                           SDL_WINDOW_SHOWN | SDL_WINDOW_VULKAN);
     if (!window) {
         SDL_Log("create window failed");
@@ -55,7 +56,18 @@ int main(int argc, char** argv)
     vk::raii::CommandPool commandPool =
         vk::raii::CommandPool(device, {{}, graphicsAndPresentQueueFamilyIndex.first});
     vk::raii::CommandBuffer commandBuffer = vk::raii::su::makeCommandBuffer(device, commandPool);
-
+    vk::raii::Queue         graphicsQueue(device, graphicsAndPresentQueueFamilyIndex.first, 0);
+    vk::raii::Queue         presentQueue(device, graphicsAndPresentQueueFamilyIndex.second, 0);
+    vk::Extent2D                extent = {width, height};
+    vk::raii::su::SwapChainData swapChainData(
+        physicalDevice,
+        device,
+        surface,
+        extent,
+        vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransferSrc,
+        {},
+        graphicsAndPresentQueueFamilyIndex.first,
+        graphicsAndPresentQueueFamilyIndex.second);
    /* glim::Init(
         extensions,
         [&](vk::Instance instance) {
