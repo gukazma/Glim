@@ -28,6 +28,13 @@ uint32_t findGraphicsQueueFamilyIndex(std::vector<vk::QueueFamilyProperties> con
 std::vector<std::string> getDeviceExtensions();
 vk::SurfaceFormatKHR     pickSurfaceFormat(std::vector<vk::SurfaceFormatKHR> const& formats);
 vk::PresentModeKHR       pickPresentMode(std::vector<vk::PresentModeKHR> const& presentModes);
+uint32_t                 findMemoryType(vk::PhysicalDeviceMemoryProperties const& memoryProperties,
+                                        uint32_t typeBits, vk::MemoryPropertyFlags requirementsMask);
+vk::DeviceMemory         allocateDeviceMemory(vk::Device const&                         device,
+                                              vk::PhysicalDeviceMemoryProperties const& memoryProperties,
+                                              vk::MemoryRequirements const&             memoryRequirements,
+                                              vk::MemoryPropertyFlags memoryPropertyFlags);
+
 template<class T> VULKAN_HPP_INLINE constexpr const T& clamp(const T& v, const T& lo, const T& hi)
 {
     return v < lo ? lo : hi < v ? hi : v;
@@ -66,6 +73,35 @@ struct SwapChainData
     vk::raii::SwapchainKHR           swapChain = nullptr;
     std::vector<vk::Image>           images;
     std::vector<vk::raii::ImageView> imageViews;
+};
+vk::raii::DeviceMemory allocateDeviceMemory(
+    vk::raii::Device const& device, vk::PhysicalDeviceMemoryProperties const& memoryProperties,
+    vk::MemoryRequirements const& memoryRequirements, vk::MemoryPropertyFlags memoryPropertyFlags);
+struct ImageData
+{
+    ImageData(vk::raii::PhysicalDevice const& physicalDevice, vk::raii::Device const& device,
+              vk::Format format_, vk::Extent2D const& extent, vk::ImageTiling tiling,
+              vk::ImageUsageFlags usage, vk::ImageLayout initialLayout,
+              vk::MemoryPropertyFlags memoryProperties, vk::ImageAspectFlags aspectMask);
+
+    ImageData(std::nullptr_t) {}
+
+    // the DeviceMemory should be destroyed before the Image it is bound to; to get that order with
+    // the standard destructor of the ImageData, the order of DeviceMemory and Image here matters
+    vk::Format             format;
+    vk::raii::DeviceMemory deviceMemory = nullptr;
+    vk::raii::Image        image        = nullptr;
+    vk::raii::ImageView    imageView    = nullptr;
+};
+
+struct DepthBufferData : public ImageData
+{
+    DepthBufferData(vk::raii::PhysicalDevice const& physicalDevice, vk::raii::Device const& device,
+                    vk::Format format, vk::Extent2D const& extent)
+        : ImageData(physicalDevice, device, format, extent, vk::ImageTiling::eOptimal,
+                    vk::ImageUsageFlagBits::eDepthStencilAttachment, vk::ImageLayout::eUndefined,
+                    vk::MemoryPropertyFlagBits::eDeviceLocal, vk::ImageAspectFlagBits::eDepth)
+    {}
 };
 }
 }

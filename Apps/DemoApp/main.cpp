@@ -69,6 +69,9 @@ int main(int argc, char** argv)
         graphicsAndPresentQueueFamilyIndex.first,
         graphicsAndPresentQueueFamilyIndex.second);
 
+    vk::raii::su::DepthBufferData depthBufferData(
+        physicalDevice, device, vk::Format::eD16Unorm, extent);
+
     while (!shouldClose) {
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_QUIT) {
